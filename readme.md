@@ -1,4 +1,4 @@
-# Sample Size Checking for Mirable
+# Sample Size Checking for Mirabile
 
 This directory contains the work involved in checking the sample size calculations that have been performed for the Fetus-Mirabile Health Technology Assessment Expression Of Interest submission.
 
