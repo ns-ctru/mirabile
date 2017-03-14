@@ -1,0 +1,24 @@
+## Overview
+
+From the draft Expression of Interest (File `EOItemplate_draft JC.docx` received via email from [Ellen Lee](mailto:e.lee@sheffield.ac.uk) 2017-03-14 @ 10:59 `Subject : Re: HTA EOI - comments on draft`)...
+
+> Work stream 1. High risk on the basis of a sibling with a brain abnormality
+> We will enrol a cohort of 200 fetuses that are considered to be “high risk” for having a brain abnormality on genetic grounds, but in whom USS has not detected a structural brain abnormality.
+>
+> Participants will undergo iuMR to assess fetal brain abnormalities. Fetuses will undergo a post-natal imaging assessment (autopsy for non-surviving infants) to determine the ORD, and the percentage of correct diagnoses made by USS and by iuMR will be calculated in relation to these. The difference in percentages will be presented along with its 95% confidence interval and p-value, calculated by the Wilson score interval and McNemar’s paired sample test respectively.
+>
+> The sample size is justified as follows: the original MERIDIAN study was powered to detect a 10% net increase in the percentage of correct fetal diagnoses (20% where iuMR corrected an inaccurate USS diagnosis and 10% where iuMR differed erroneously from USS). The latter occurred only rarely, with 2/570 (0.4%) instances of iuMR erroneously changing the finding on USS. Assuming iuMR incorrectly finds an abnormality on a negative USS finding in 1% of cases, and that iuMR correctly changes a negative diagnosis in 10% of cases (i.e. a 9% net improvement), we require a total of 139 fetal scans. Assuming ORD is not available in a third of cases (as seen in the primary MERIDIAN analysis), the sample size is inflated to 200. The choice of 10% in keeping with the original MERIDIAN study since this will lead to changes in prognosis and clinical mangagement in at least 5% of cases.
+>
+> Work stream 2. Increased risk on the basis of  CMV infection
+>
+> We will enrol a cohort of 200 fetuses with confirmed CMV infection but with no fetal brain abnormality detected on USS. The methods and sample justification are identical to workstream 1.
+>
+> Work stream 3. Increased risk on the basis of a microcephaly
+>
+> The nature of the research question for workstream 3  differs from 1 and 2. We will assess whether iuMR improves the diagnostic accuracy among fetuses with microcephaly (at least 2SD below normative mean) as the sole USS diagnosis, or with non-specific findings such as VM or enlarged extra-axial CSF spaces., but we hypothesise that the risk of additional diagnoses will depend on the degree of microcephaly. In workstream 3 we will assess the relationship between head size and additional diagnoses, and in so doing the cut-off at which iuMR is likely to lead to an appreciable increase in diagnostic accuracy.
+>
+> For the purposes of this workstream, cases of microcephaly will be divided into three risk groups (<2 to 2.5SD,  <2.5 to 3SD and <3SD below normative mean). We will aim to recruit approximately 450 fetuses in total with at least 90 in the <3SD group. Assuming that the risk in the three subgroups is 1%, 5% and 10% respectively we will have 90% power to detect this association  at the two-sided 5% level of significance and will estimate the risk of additional diagnosis to a standard error of <=4% within in each subgroup.
+
+Two sample size calculations therefore need checking to comply with the MHRA requirements of demonstrable Quality Assurance of sample size calculations in submitted proposals[^1].
+
+[^1]: Exactly what standard the MHRA require such Quality Assurance to adhere to is unclear at present other than evidence of the calculations having been checked.
