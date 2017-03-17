@@ -1,1 +1,96 @@
 ## Results
+
+### Test of Proportions
+
+```{r proportions_prep, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = TRUE}
+## Calculate difference in terms of cohens D
+p1 <- 0.1
+p2 <- 0.01
+cohens.d <- ES.h(p1 = p1, p2 = p2)
+
+```
+
+The sample size has been calculated as 10% detection rate via intra-uternine Magentic Resonance Imaginag (iuMR) compared to 1% via Ultrasound (US).  This equates to Cohen's D of `r cohens.d`, but since this is only an estimate of the difference in detection rates it is informative to consider values around this should the estimate be inaccurate.  To that end a range of sample size calculations for varying detection rates in the iuMR group have been tested for a range of powers and three significance levels (`p = 0.05`, `p = 0.01` and `p = 0.001`).  The results are plotted below (the vertical line represents the estimated effect size of `r cohens.d`).
+
+```{r proportions, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = TRUE}
+## Set the proportion in each arm, from Stata do-file...
+##
+## *Specify 10% iuMR correct US incorrect; 1% vice versa, 90%
+## power pairedproportions .1 .01, power(0.9)
+## *allow 25% drop out
+## di r(N)/.75
+p1.range <- seq(from = 0.02,
+          to   = 0.12,
+          by   = 0.01)
+p2      <- 0.01
+## Set range of parameters
+sig.levels <- c(0.05, 0.01, 0.001)
+power.range <- seq(from = 0.75,
+             to   = 0.95,
+             by   = 0.05)
+## Set up a data frame to hold results
+rm(results)
+results <- data.frame(h           = double(),
+                      n           = double(),
+                      sig.level   = double(),
+                      power       = double(),
+                      alternative = character(),
+                      method      = character(),
+                      note        = character())
+## Run calculations
+for(power in power.range){
+    for(sig.level in sig.levels){
+        for(p1 in p1.range){
+        ## paste0('P1 : ', p1) %>% print()
+            ## paste0('P2 : ', p2) %>% print()
+            ## ES.h(p1 = p1, p2 = p2) %>% print()
+            t <- pwr.2p.test(h         = ES.h(p1 = p1, p2 = p2),
+                             sig.level = sig.level,
+                             power     = power)
+            results <- rbind(results,
+                             unlist(t))
+        }
+    }
+}
+names(results) <- c('h', 'n', 'sig.level', 'power', 'alternative', 'method', 'note')
+results <- mutate(results,
+                  h         = as.double(h),
+                  n         = as.numeric(n),
+                  sig.level = as.numeric(sig.level),
+                  power     = as.numeric(power))
+## Unadjusted sample size
+n.unadjusted <- dplyr::filter(results,
+                              round(h, digits = 3) == round(cohens.d, digits = 3) &
+                              sig.level == 0.05 &
+                              power     == 0.9)$n
+n.unadjusted <- ceiling(n.unadjusted)
+## Adjust n to account for 25% drop out
+results <- mutate(results,
+                  n         = n / 0.75)
+## Plot
+dplyr::filter(results, power %in% c(0.8, 0.85, 0.9, 0.95) & h > 0.4 & h < 0.5) %>%
+ggplot(aes(x = h, y = n, colour = factor(power))) +
+    facet_grid(sig.level ~ .) +
+    ## geom_line() +
+    geom_smooth(se = FALSE) +
+    geom_vline(xintercept = cohens.d) +
+    xlab('Cohens d') + ylab('N (per sample)') +
+    ggtitle('Power for test of Proportions for different Significance Levels') +
+    theme_bw() +
+    scale_colour_discrete(name = 'Power')
+## The sample size required for 90% power and 5% significance
+n.adjusted <- dplyr::filter(results,
+                              round(h, digits = 3) == round(cohens.d, digits = 3) &
+                              sig.level == 0.05 &
+                              power     == 0.9)$n
+n.adjusted <- ceiling(n.adjusted)
+
+```
+
+The sample size required to detect a 10% detection rate via iuMR and 1% via US with 90% power and a significance threshold of `p = 0.05` is `r n.unadjusted` per arm, but allowing for 25% attrition (as plotted above) this increases to `r n.adjusted` per arm (`r 2 * n.adjusted` overall).
+
+### Ordinal Regression
+
+```{r ordinal_regression, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = TRUE}
+
+```
