@@ -1,5 +1,5 @@
 ---
-title: Fetus-MIRABILE : Sample Size Validation
+title: Fetus-MIRABILE - Sample Size Validation
 output: pdf_document
 bibliography: sections/bibliography.bib
 ---
@@ -22,10 +22,10 @@ set.seed(69027181)
 ## Set sensible defaults
 ggplot2.opts <- list()
 ggplot2.opts$binwidth <- 30
-
+library(pwr)
 ```
 
-```{r backup, echo = FALSE, eval = TRUE}
+```{r backup, echo = FALSE, eval = FALSE}
 ## Make a backup of current output based on time stamp by obtaining the
 ## modified time of the existing file and constructing a command to
 ## copy this to the sub-directory 'arch/' modifying the filename to include
@@ -42,14 +42,15 @@ system(cmd)
 ```{r child = 'sections/overview.Rmd', eval = TRUE}
 ```
 
-## Methods {.tabset .tabset-fade .tabset-pills}
-
-```{r child = 'sections/methods.Rmd', eval = FALSE}
+```{r child = 'sections/methods.Rmd', eval = TRUE}
 ```
 
 ```{r child = 'sections/results.Rmd', eval = FALSE}
 ```
 
+## Appendix
+```{r child = 'sections/appendix.Rmd', eval = TRUE}
+```
 
 ## References
 
