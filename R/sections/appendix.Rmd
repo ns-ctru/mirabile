@@ -4,6 +4,8 @@
 Some notes on reading which may or may not need addressing...
 
 * Familial clustering does not in and of itself mean there are *genetic grounds*.  Families have shared environment and unless there is evidence of increased sharing of specific genetic variants in affected individuals there is an absence of evidence to indicate a genetic component.
+* Sample size justification for workstream 1 has conflicting numbers for net improvement, initially states 10%, then further down (in brackets) states 9%.  The original sample size calculation used 9% net improvement, from 1% to 10%.
+* Sample size justification for workstream 1 states *Assuming ORD is not available in a third of cases*, but the calculation only appears to have adjusted for 25% attrition.
 * Sample size justification for workstream 1 states *the original MERIDIAN study was powered to detect a 10% net increase in the percentage of correct fetal diagnoses* but doesn't indicate the power (e.g. 80%, 90% or 95%) used.  A reviewer (or QC Statistician) wishing to check the calculation will not know what the proposed work uses.
 
 
