@@ -1,0 +1,258 @@
+## Appendix
+### Notes on Draft EOI
+
+Some notes on reading which may or may not need addressing...
+
+* Familial clustering does not in and of itself mean there are *genetic grounds*.  Families have shared environment and unless there is evidence of increased sharing of specific genetic variants in affected individuals there is an absence of evidence to indicate a genetic component.
+* Sample size justification for workstream 1 states *the original MERIDIAN study was powered to detect a 10% net increase in the percentage of correct fetal diagnoses* but doesn't indicate the power (e.g. 80%, 90% or 95%) used.  A reviewer (or QC Statistician) wishing to check the calculation will not know what the proposed work uses.
+
+
+### Original Sample Size Calculation
+
+The following is a copy of the code used in the original sample size calculation.  The file can be fouind in...
+
+> `../projects/CTRU/CTRU jobs/2017/J17-07 Griffiths High risk pregnancy/Stats/Sample size/Original/Meridian high risk sample size.do`
+
+```{eval = FALSE}
+**sample sizee for the microcephaly
+*substrand 1 - is USS v iuMR different
+*substrand 2 - is there a link between z-score size and other risk
+*substrand 3 - does iuMR v USS depend on size!
+
+*1 is easy, done
+*Specify 10% iuMR correct US incorrect; 1% vice versa, 90%
+power pairedproportions .1 .01, power(0.9)
+*allow 25% drop out
+di r(N)/.75
+
+
+
+*2
+*now simsit - microcephaly
+*need the prevalance of a) each type; 2-2.5SDs; 2.5-3SDs; 3SD+  == prev(#) eg 5:3:1
+* b) underlying risk of an abnormality in each == risk(0.##) eg .01 0.05 0.14
+
+cap program drop simsitcat
+program define simsitcat, rclass
+ syntax , risk2(real) risk25(real) risk3(real) ///
+          prev2(real) prev25(real) prev3(real) n(real)
+
+ clear
+ set obs `n'
+
+*how many in each cat : p2=2-2.5, p25=2.5-3, p3=3+
+local pall=`prev2'+`prev25'+`prev3'
+*if dont add to 1 then rescale
+local p2= `prev2'/`pall'
+local p25=`prev25'/`pall'
+local p3= `prev3'/`pall'
+
+qui {
+
+/*use this if constrained sample proportions*/
+	gen group=1 if _n<(_N*`p2')
+	replace group=2 if group==. & _n<(_N*(`p2'+`p25'))
+	replace group=3 if group==.
+
+/*use this if random sample of cohort with underlying but not onstrained p
+	gen u=uniform()
+	gen group=1 if u<`p2'
+	replace group=2 if group==. & u<`p2'+`p25'
+	replace group=3 if group==.
+	drop u
+*/
+*part 1 - link between centile group and risk
+	gen event=rbinomial(1,`risk2') if group==1
+	replace event=rbinomial(1,`risk25') if group==2
+	replace event=rbinomial(1,`risk3') if group==3
+	logit event group
+
+ }
+ *is it sig at 5%?
+ local p=normprob(-abs(_b[group]/_se[group]))
+ local sig=cond(`p'<0.05,1,0)
+ return scalar logor =_b[group]
+ return scalar sig =`sig'
+
+****second bit is diagnostic accuracy
+*by definition USS==clear
+*assume iuMR has sens and spec 90%
+
+ *if we are to assume the 10% v 1% then 200 is enough (300 too many!)
+*so dont need t bother with mcnemar p
+/* gen u=uniform()  // RND event for BOTH US+MR:
+ *assign iuMR to match the event with 90%
+ gen mrevent=cond(u<0.9,event,abs(1-event))
+
+ gen uscorrect=(event==0)
+ gen mrcorrect=(mrevent==event)
+ qui cou if uscorrect==1
+ local usn=r(N)
+ qui cou if mrcorrect==1
+ local mrn=r(N)
+ qui mcc uscorr mrcorr
+ return scalar mccp=((r(p_exact)<0.05) &  (`mrn' >`usn'))
+ *clogit
+ */
+end
+clear
+/*
+* simsitcat, n(200) risk2(0.01) risk25(.05) risk3(0.1)  prev2(12) prev25(4) prev3(1)
+*ex
+ simsitcat, n(255) risk2(0.01) risk25(.05) risk3(0.1)  prev2(1) prev25(1) prev3(1)
+ table grou,c(n ev sum ev mean ev)  format("%4.2f")
+ table grou,c(n ev mean mre mean usco mean mrc)
+ex
+ *too few in <3sd!
+ simsitcat, n(255) risk2(0.01) risk25(.05) risk3(0.15)  prev2(9) prev25(3) prev3(1)
+ simsitcat, n(255) risk2(0.01) risk25(.05) risk3(0.15)  prev2(2) prev25(2) prev3(1)
+ simsitcat, n(255) risk2(0.01) risk25(.05) risk3(0.1)  prev2(1) prev25(1) prev3(1)
+ table grou,c(n ev sum ev)
+ table grou,c(n ev mean usev mean mre mean usco mean mrc)
+
+ */
+
+
+ clear
+simulate mean=r(logor) sigtrend=r(sig) /*sigmcnem=r(mccp)*/, reps(1000):  ///
+ simsitcat, n(300) risk2(0.01) risk25(.05) risk3(0.1)  prev2(1) prev25(1) prev3(1)
+
+ simulate mean=r(logor) sigtrend=r(sig) /*sigmcnem=r(mccp)*/, reps(1000):  ///
+ simsitcat, n(300) risk2(0.01) risk25(.05) risk3(0.1)  prev2(3) prev25(3) prev3(2)
+su
+ex
+
+ simulate mean=r(logor) sig=r(sig), reps(500):  ///
+ simsitcat, n(210) risk2(0.01) risk25(.05) risk3(0.15)  prev2(1) prev25(2) prev3(1)
+
+
+ su
+ex
+simulate mean=r(logor) sig=r(sig), reps(2000):  ///
+ simsitcat, n(375) risk2(0.01) risk25(.05) risk3(0.1)  prev2(9) prev25(3) prev3(1)
+su
+
+
+set seed 9416
+
+simulate mean=r(logor) sig=r(sig), reps(200):  ///
+ simsitcat, n(100) risk2(0.05) risk25(.2) risk3(0.4)  prev2(12) prev25(4) prev3(1)
+*n=100: just under 90% for 5-20-40
+* 5-25-50 easy!
+
+
+
+
+
+ex
+**************Next: improvement due to iuMR
+*clogit regression?
+
+
+
+ local eventp=.5
+ local n=102
+ di "Upper: 50% prev" %4.1f 100*sqrt(.5*.5/`n') "%"
+ di "Mid:   25% prev" %4.1f 100*sqrt(.25*.75/`n') "%"
+ di "Low:   10% prev" %4.1f 100*sqrt(.1*.9/`n') "%"
+* di %4.1f 100*sqrt(`eventp'*`eventp'/`n') "%"
+
+table group,c(n event sum event mean event )
+
+
+set seed 5454
+simulate mean=r(logor) sig=r(sig), reps(200):  ///
+ simsit , n(100) risk2(0.05) risk3(0.3) zlow(2) zupp(4)
+
+
+
+
+
+*****************************************************************************
+
+
+****Code not used in the final version
+***trunc normal - not likely.
+*triangulate between risk at 2&3SD, and a*b in logit model
+*assume logit link where logit(risk) = a + b*size
+*risk= exp(xb)/{ 1 + exp(xb) }
+
+*if risk is 1% at z=2 and 50% at z=3 then
+log(0.01/0.99) = -4.595119 = a+2b
+log(0.5/0.5) = 0 = a+3b
+4.595119 =b
+a=-4.595119 -2*4.595119 = -13.78536
+and -13.78536 +3*4.595119
+
+*/
+
+
+
+*now simsit
+cap program drop simsit
+program define simsit, rclass
+ syntax , n(real) risk2(real) risk3(real) zlow(real) zupp(real)
+*seed(real)
+ *set seed `seed'
+
+ clear
+ local logit2=log(`risk2'/(1-`risk2'))
+ local logit3=log(`risk3'/(1-`risk3'))
+ local b=`logit3'-`logit2'
+ local a =`logit3'-3*`b'
+
+ set obs 15000
+
+ gen zsc=rnormal(0,1)
+
+ keep if zsc>`zlow' & zsc<`zupp'
+ *need to ensure no more than n people
+  qui cou
+  if r(N)<`n' {
+
+    di as err "Amend simulation code - too few pts, found " r(N) ", expected `n'"
+	ex
+ }
+ else {
+ *randomly drop
+  qui gen u=uniform()
+  sort u
+  keep if _n<=`n'
+ more
+ drop u
+ }
+ * gen zscat=round(zsc,0.5)
+
+ gen logitrisk=`a'+zsc*`b'
+ gen prisk=exp(logitrisk)/(1+exp(logitrisk))
+ gen event=rbinomial(1,prisk)
+* tab zscat event
+ qui logit event zsc
+ *is it sig at 5%?
+ local p=normprob(-abs(_b[zsc]/_se[zsc]))
+ local sig=cond(`p'<0.05,1,0)
+ return scalar logor =_b[zsc]
+ return scalar sig =`sig'
+
+end
+*set trace off
+clear
+
+set seed 5454
+simulate mean=r(logor) sig=r(sig), reps(200):  ///
+ simsit , n(100) risk2(0.05) risk3(0.3) zlow(2) zupp(4)
+
+ex
+simulate simsit
+
+
+/* depends on prob in each
+*2-2.5 is 1.654% of pop
+*2-2.75 is 0.323%
+*2.75-3 is 0.163%
+*3-3.5% is 0.11%
+*<3.5% is 0.023%
+*ie ABOUT 12:4:1
+
+
+```
