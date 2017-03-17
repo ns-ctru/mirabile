@@ -1,6 +1,7 @@
 ---
 title: Fetus-MIRABILE - Sample Size Validation
 output: pdf_document
+urlcolor: blue
 bibliography: sections/bibliography.bib
 ---
 
@@ -45,10 +46,9 @@ system(cmd)
 ```{r child = 'sections/methods.Rmd', eval = TRUE}
 ```
 
-```{r child = 'sections/results.Rmd', eval = FALSE}
+```{r child = 'sections/results.Rmd', eval = TRUE}
 ```
 
-## Appendix
 ```{r child = 'sections/appendix.Rmd', eval = TRUE}
 ```
 
