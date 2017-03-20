@@ -1,4 +1,5 @@
 ## Appendix
+
 ### Notes on Draft EOI
 
 Some notes on reading which may or may not need addressing...
@@ -7,6 +8,7 @@ Some notes on reading which may or may not need addressing...
 * Sample size justification for workstream 1 has conflicting numbers for net improvement, initially states 10%, then further down (in brackets) states 9%.  The original sample size calculation used 9% net improvement, from 1% to 10%.
 * Sample size justification for workstream 1 states *Assuming ORD is not available in a third of cases*, but the calculation only appears to have adjusted for 25% attrition.
 * Sample size justification for workstream 1 states *the original MERIDIAN study was powered to detect a 10% net increase in the percentage of correct fetal diagnoses* but doesn't indicate the power (e.g. 80%, 90% or 95%) used.  A reviewer (or QC Statistician) wishing to check the calculation will not know what the proposed work uses.
+* The text as written of `< 2 to 2.5SD, <2.5 to 3SD and <3SD` is potentially confusing as `<` means less than 2 Standard Deviations.  If my understanding is correct then the aim is to recruit to the stated categories individuals who's cranial circumference is *between* 2 to 2.5, *between* 2.5 and 3 and *greater than* 3 standard deviations from the mean.  Thus the inequaility signs are the wrong way round and if it is to be used should be written `> 2 to  < 2.5SD, >2.5 to < 3SD and >3SD` although it could just as easily be ommitted completely `2 to 2.5SD, 2.5 to 3SD and more than 3SD`.
 
 
 ### Original Sample Size Calculation
