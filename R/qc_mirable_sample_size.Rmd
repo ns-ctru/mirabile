@@ -24,6 +24,8 @@ set.seed(69027181)
 ggplot2.opts <- list()
 ggplot2.opts$binwidth <- 30
 library(pwr)
+library(TrialSize)
+
 ```
 
 ```{r backup, echo = FALSE, eval = FALSE}
