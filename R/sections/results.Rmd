@@ -26,106 +26,62 @@ p2      <- 0.01
 ## Set range of parameters
 sig.levels <- c(0.05, 0.01, 0.001)
 power.range <- seq(from = 0.75,
-             to   = 0.95,
-             by   = 0.05)
+                   to   = 0.95,
+                   by   = 0.05)
 ## Set up a data frame to hold results
 rm(results)
-results <- data.frame(h           = double(),
-                      n           = double(),
-                      sig.level   = double(),
-                      power       = double(),
-                      alternative = character(),
-                      method      = character(),
-                      note        = character())
+results <- data.frame(p1       = double(),
+                      p2       = double(),
+                      cohens.d = double(),
+                      power    = double(),
+                      alpha    = double(),
+                      n        = double())
 ## Run calculations
 for(power in power.range){
     for(sig.level in sig.levels){
         for(p1 in p1.range){
-        ## paste0('P1 : ', p1) %>% print()
-            ## paste0('P2 : ', p2) %>% print()
-            ## ES.h(p1 = p1, p2 = p2) %>% print()
-            t <- pwr.2p.test(h         = ES.h(p1 = p1, p2 = p2),
-                             sig.level = sig.level,
-                             power     = power)
+            cohens.d <- ES.h(p1 = p1, p2 = p2)
+            n <- McNemar.Test(alpha = sig.level,
+                              beta  = 1 - power,
+                              psai  = p2 / p1,
+                              paid  = p1 + p2)
             results <- rbind(results,
-                             unlist(t))
+                             c(p1, p2, cohens.d, power, sig.level, n))
         }
     }
 }
-names(results) <- c('h', 'n', 'sig.level', 'power', 'alternative', 'method', 'note')
+names(results) <- c('p1', 'p2', 'cohens.d', 'power', 'alpha', 'n')
 results <- mutate(results,
-                  h         = as.double(h),
-                  n         = as.numeric(n),
-                  sig.level = as.numeric(sig.level),
-                  power     = as.numeric(power))
+                  p1         = as.double(p1),
+                  p2         = as.double(p2),
+                  cohens.d   = as.double(cohens.d),
+                  power      = as.numeric(power),
+                  alpha      = as.numeric(alpha),
+                  n          = as.numeric(n))
 ## Unadjusted sample size
-n.unadjusted <- dplyr::filter(results,
-                              round(h, digits = 3) == round(cohens.d, digits = 3) &
-                              sig.level == 0.05 &
-                              power     == 0.9)$n
-n.unadjusted <- ceiling(n.unadjusted)
+n.unadjusted <- dplyr::filter(results, p1 == 0.1 & p2 == 0.01 & power == 0.9 & alpha == 0.05)$n %>%
+                ceiling()
 ## Adjust n to account for 25% drop out
 results <- mutate(results,
-                  n         = n / 0.75)
+                  n.adjusted = n / 0.75)
 ## Plot
-dplyr::filter(results, power %in% c(0.8, 0.85, 0.9, 0.95) & h > 0.4 & h < 0.5) %>%
-ggplot(aes(x = h, y = n, colour = factor(power))) +
-    facet_grid(sig.level ~ .) +
+dplyr::filter(results, power %in% c(0.8, 0.85, 0.9, 0.95) & cohens.d > 0.4 & cohens.d < 0.48) %>%
+ggplot(aes(x = cohens.d, y = ceiling(n), colour = factor(power))) +
+    facet_grid(alpha ~ .) +
     ## geom_line() +
     geom_smooth(se = FALSE) +
-    geom_vline(xintercept = cohens.d) +
+    geom_vline(xintercept = ES.h(p1 = 0.1, p2 = 0.01)) +
     xlab('Cohens d') + ylab('N (per sample)') +
     ggtitle('Power for test of Proportions for different Significance Levels') +
     theme_bw() +
     scale_colour_discrete(name = 'Power')
 ## The sample size required for 90% power and 5% significance
-n.adjusted <- dplyr::filter(results,
-                              round(h, digits = 3) == round(cohens.d, digits = 3) &
-                              sig.level == 0.05 &
-                              power     == 0.9)$n
-n.adjusted <- ceiling(n.adjusted)
+n.adjusted <- dplyr::filter(results, p1 == 0.1 & p2 == 0.01 & power == 0.9 & alpha == 0.05)$n.adjusted %>%
+              ceiling()
 
 ```
 
-The sample size required to detect a 10% detection rate via iuMR and 1% via US with 90% power and a significance threshold of `p = 0.05` is `r n.unadjusted` per arm, but allowing for 25% attrition (as plotted above) this increases to `r n.adjusted` per arm (`r 2 * n.adjusted` overall).
-
-\pagebreak
-
-This does not match that derived by [Mike Bradburn](mailto:m.bradburn@sheffield.ac.uk) (see Overview section), however I have reviewed the code written to perform the calculation and run it independently in [Stata v14.1](https://www.stata.com/) and confirm that it produces the suggested sample size used in the current version of the draft.
-
-```
-*1 is easy, done
-*Specify 10% iuMR correct US incorrect; 1% vice versa, 90%
-. power pairedproportions .1 .01, power(0.9)
-
-Performing iteration ...
-
-Estimated sample size for a two-sample paired-proportions test
-Large-sample McNemar's test
-Ho: p21 = p12  versus  Ha: p21 != p12
-
-Study parameters:
-
-        alpha =    0.0500
-        power =    0.9000
-        delta =   -0.0900  (difference)
-          p12 =    0.1000
-          p21 =    0.0100
-
-Estimated sample size:
-
-            N =       139
-
-*allow 25% drop out
-. di r(N)/.75
-
-185.33333
-
-
-```
-
-Resolving the differences between the two pieces of software is beyond the scope of the Quality Control exercise.
-
+The sample size required to detect a 10% detection rate via iuMR and 1% via US with 90% power and a significance threshold of p = 0.05 is `r n.unadjusted` per arm, but allowing for 25% attrition (as plotted above) this increases to `r n.adjusted` per arm (`r 2 * n.adjusted` overall). This matches perfectly that derived by [Mike Bradburn](mailto:m.bradburn@sheffield.ac.uk) (see Overview section)
 
 ### Ordinal Regression
 
@@ -144,7 +100,7 @@ Table : Categorisation, proportions and risks for the three artifical categories
 | >3SD             | 1          | 10%  |
 
 
-```{r ordinal_regression, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = TRUE}
+```{r ordinal_regression, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = FALSE}
 ## Set proportions and risk for each category
 prop1 <- 12
 prop2 <- 4
