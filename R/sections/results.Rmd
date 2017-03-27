@@ -163,7 +163,7 @@ mirabile_sim <- function(n     = 100,
         ## Optionally print tabulation
         ## table(results$simulated$group, results$simulated$event) %>% print()
         ## Test for association
-        results$test <- glm(event ~ group, data = results$simulated, family = binomial) %>% tidy()
+        results$test <- glm(event ~ group, data = results$simulated, family = binomial) %>% broom::tidy()
         ## results$test %>% print()
         results$p$p[i] <- dplyr::filter(results$test, term == 'group')$p.value
     }
