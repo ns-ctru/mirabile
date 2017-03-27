@@ -10,7 +10,7 @@ cohens.d <- ES.h(p1 = p1, p2 = p2)
 
 ```
 
-The sample size has been calculated as 10% detection rate via intra-uternine Magentic Resonance Imaginag (iuMR) compared to 1% via Ultrasound (US).  This equates to Cohen's D of `r cohens.d`, but since this is only an estimate of the difference in detection rates it is informative to consider values around this should the estimate be inaccurate.  To that end a range of sample size calculations for varying detection rates in the iuMR group have been tested for a range of powers and three significance levels (`p = 0.05`, `p = 0.01` and `p = 0.001`).  The results are plotted below (the vertical line represents the estimated effect size of `r cohens.d`).
+The sample size has been calculated as 10% detection rate via intra-uternine Magentic Resonance Imaginag (iuMR) compared to 1% via Ultrasound (US) using [McNemars paired test](https://en.wikipedia.org/wiki/McNemar%27s_test) since teh two methods of assessment are performed on the same fetus.  This equates to Cohen's D of `r cohens.d`, but since this is only an estimate of the difference in detection rates it is informative to consider values around this should the estimate be inaccurate.  To that end a range of sample size calculations for varying detection rates in the iuMR group have been tested for a range of powers and three significance levels (`p = 0.05`, `p = 0.01` and `p = 0.001`).  The results are plotted below (the vertical line represents the estimated effect size of `r cohens.d`).
 
 ```{r proportions, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = TRUE}
 ## Set the proportion in each arm, from Stata do-file...
@@ -81,15 +81,15 @@ n.adjusted <- dplyr::filter(results, p1 == 0.1 & p2 == 0.01 & power == 0.9 & alp
 
 ```
 
-The sample size required to detect a 10% detection rate via iuMR and 1% via US with 90% power and a significance threshold of p = 0.05 is `r n.unadjusted` per arm, but allowing for 25% attrition (as plotted above) this increases to `r n.adjusted` per arm (`r 2 * n.adjusted` overall). This matches perfectly that derived by [Mike Bradburn](mailto:m.bradburn@sheffield.ac.uk) (see Overview section)
+The sample size required to detect a 10% detection rate via iuMR and 1% via US with 90% power and a significance threshold of p = 0.05 is `r n.unadjusted` per arm, but allowing for 25% attrition (as plotted above) this increases to `r n.adjusted` per arm (`r 2 * n.adjusted` overall). This matches perfectly that derived by [Mike Bradburn](mailto:m.bradburn@sheffield.ac.uk) (see Overview section).
 
 ### Ordinal Regression
 
 Sample sizes have been derived via simulation and appear to have used an element of trial and error to determine appropriate numbers.  The approach taken has been to artificially categorise a continuous variable (cranial circumference) into three risk groups based on the observed value being more than two standard deviations from the mean.  Neither the mean, nor the standard deviation on which this assessment is being made are stated in the current draft document, nor is there an explanation of why the risk for each category has been selected (beyond evidence of some trial and error in the original calculations).
 
-It is this authors point of view that categorising a continuous variable prior to analysing data should not be undertaken, it is well known and demonstrated that this reduces the power compared to analysing the underlying continuous variable (@kahan2016, @dawson2012, @vickers2012, @naggara2011, @heavner2010, @vickers2008, @altman2006, @royston2006, @maccallum2002) and various other problems such as cut-points being arbitrary, assumption of risk being continuous within a category etc. (for a summary see [here](http://biostat.mc.vanderbilt.edu/wiki/Main/CatContinuous)).  However, it is not within the scope of the Quality Control exercise to critique or review the chosen study design, it is mentioned only to raise awareness of the (pervasive[^2]) problem and that the review panel may critique this aspect.
+It is this authors point of view that categorising a continuous variable prior to analysing data should not be undertaken, it is well known and demonstrated that this reduces the power compared to analysing the underlying continuous variable (@kahan2016, @dawson2012, @vickers2012, @naggara2011, @heavner2010, @vickers2008, @altman2006, @royston2006, @maccallum2002) and various other problems such as cut-points being arbitrary, assumption of risk being continuous within a category arise when such an approach is taken (for a summary see [here](http://biostat.mc.vanderbilt.edu/wiki/Main/CatContinuous)).  However, it is not within the scope of the Quality Control exercise to critique or review the chosen study design, it is mentioned only to raise awareness of the (pervasive) problem and that the review panel may critique this aspect.
 
-Since an element of trial and error appears to have been utilised to derive optimal allocation to the three artificial categories and the risk associated with each only the final parameters used in the application have been checked.  To this end the categories, proportions and risks shown in the table below have been analysed.
+Since an element of trial and error appears to have been utilised to derive optimal allocation to the three artificial categories and the risk associated with each, only the final parameters used in the application have been checked.  To this end the categories, proportions and risks shown in the table below have been analysed.
 
 Table : Categorisation, proportions and risks for the three artifical categories required based on the circumference of the cranium.
 
@@ -100,56 +100,107 @@ Table : Categorisation, proportions and risks for the three artifical categories
 | >3SD             | 1          | 10%  |
 
 
-```{r ordinal_regression, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = FALSE}
-## Set proportions and risk for each category
-prop1 <- 12
-prop2 <- 4
-prop3 <- 1
-risk1 <- 1
-risk2 <- 1
-
+```{r ordinal_regression, echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE, eval = TRUE}
 ## Function for simulating population based on specified parameters
 mirabile_sim <- function(n     = 100,
-                         prop1 = prop1,
-                         prop2 = prop2,
-                         prop3 = prop3,
-                         risk1 = risk1,
-                         risk2 = risk2,
-                         risk3 = risk3,
-                         nsim  = 10,
+                         prop1 = proportion$prop1,
+                         prop2 = proportion$prop2,
+                         prop3 = proportion$prop3,
+                         risk1 = risk$risk1,
+                         risk2 = risk$risk2,
+                         risk3 = risk$risk3,
+                         nsim  = 100,
+                         p     = 0.05,
                          ...){
     ## Initialise results
     results <- list()
-    results$simulated <- matrix(nrow = n, ncol = 3) %>% as.data.frame()
-    names(results$simulated) <- c('uniform', 'group', 'event')
-    test$row <- rownames(test) %>% as.numeric()
     ## Check whether the proportions sum to 1
-    prop_all <- prop1 + prop2 + prop3
+    prop_all <- (prop1 + prop2 + prop3)
     ## If they don't then true poportions have not been supplied, in which
     ## case rescale
-    if(prop.all != 1){
+    if(prop_all != 1){
         prop1 <- prop1 / prop_all
         prop2 <- prop2 / prop_all
         prop3 <- prop3 / prop_all
     }
-    ## Derive data set
+    ## Simulated data set, populate group allocation
+    results$simulated <- matrix(nrow = n, ncol = 1) %>% as.data.frame()
+    names(results$simulated) <- c('group')
+    results$simulated$row <- rownames(results$simulated) %>% as.numeric()
+    ## Assign group classification
     results$simulated <- results$simulated %>%
-                         mutate(## Assign group classification
-                                group = case_when(.$row <  (n * prop1) ~ 1,
+                         mutate(group = case_when(.$row <  (n * prop1) ~ 1,
                                                   .$row >= (n * prop1) & .$row < (n * (prop1 + prop2)) ~ 2,
-                                                  .$row >= (n * (prop1 + prop2))] ~ 3),
-                                ## Probability of event (i.e. abnormality) *within* group
-                                event = case_when(.$group == 1 ~ rbinom(n = n, p = risk1, size = 1),
-                                                  .$group == 2 ~ rbinom(n = n, p = risk2, size = 1),
-                                                  .$group == 3 ~ rbinom(n = n, p = risk3, size = 1))
-    ## Test for association
-    results$test <- glm(event ~ group)
+                                                  .$row >= (n * (prop1 + prop2)) ~ 3))
+    ## Number in each group
+    n1 <- dplyr::filter(results$simulated, group == 1) %>% nrow()
+    n2 <- dplyr::filter(results$simulated, group == 2) %>% nrow()
+    n3 <- dplyr::filter(results$simulated, group == 3) %>% nrow()
+    ## Set up a data frame to hold the p-values from each simulation
+    results$p <- matrix(nrow = nsim, ncol = 1) %>% as.data.frame()
+    names(results$p) <- c('p')
+    ## Derive data set
+    for(i in seq(1:nsim)){
+        .risk1 <- rbinom(n = n1, p = risk1, size = 1) %>% as.data.frame()
+        .risk2 <- rbinom(n = n2, p = risk2, size = 1) %>% as.data.frame()
+        .risk3 <- rbinom(n = n3, p = risk3, size = 1) %>% as.data.frame()
+        risk <- rbind(.risk1,
+                      .risk2,
+                      .risk3)
+        names(risk) <- c('event')
+        risk <- mutate(risk,
+                       event = as.integer(event))
+        ## Probability of event (i.e. abnormality) *within* group
+        if(i == 1){
+            results$simulated <- cbind(results$simulated,
+                                       risk)
+        }
+        else{
+            results$simulated <- cbind(dplyr::select(results$simulated, -event),
+                                       risk)
+        }
+        rm(risk)
+        ## Optionally print tabulation
+        ## table(results$simulated$group, results$simulated$event) %>% print()
+        ## Test for association
+        results$test <- glm(event ~ group, data = results$simulated, family = binomial) %>% tidy()
+        ## results$test %>% print()
+        results$p$p[i] <- dplyr::filter(results$test, term == 'group')$p.value
+    }
+    ## Count how many times p <
+    results$p <- results$p %>%
+                 mutate(p = as.numeric(p))
+    results$sim.p <- (dplyr::filter(results$p, p < p) %>% nrow()) / nsim
+    return(results)
 }
+
+## Set proportions and risk for each category
+proportion <- list()
+proportion$prop1 <- 12
+proportion$prop2 <- 4
+proportion$prop3 <- 1
+risk <- list()
+risk$risk1 <- 0.01
+risk$risk2 <- 0.05
+risk$risk3 <- 0.1
+nsim       <- 10000
+p.crit     <- 0.05
+## Run simulations
+sim.results <- mirabile_sim(n     = 450,
+                            prop1 = proportion$prop1,
+                            prop2 = proportion$prop2,
+                            prop3 = proportion$prop3,
+                            risk1 = risk$risk1,
+                            risk2 = risk$risk2,
+                            risk3 = risk$risk3,
+                            nsim  = nsim,
+                            p     = p.crit)
+## Count how many p-vaules are < p.crit
+sim.n <- (dplyr::filter(sim.results$p, p < p.crit) %>% nrow())
+sim.p <- ((dplyr::filter(sim.results$p, p < p.crit) %>% nrow()) / nsim) * 100
 
 ```
 
-The resulting simulations indicate that a statistically significant result would be obtained.
+Out of a total of `r nsim` simulations `r sim.n` had p-values from univariable logistic regression less than the threshold of p = `r p.crit` which equates to power of `r sim.p`%.
 
-One final comment on this approach is that it assumes the analyses will be conducted purely on the risk categories alone and no other information on individuals will be included.  This may be the intention but often co-variates are used in the analyses when conducted and this will increase the power to detect a difference as the variation attributable to co-variates is accounted for in the analytical process.  Thus the stated numbers are in essence a worse case scenario and including co-variates may result in an analysis that has greater power than that which has been calculated.  An example of the impact of including co-variates on simulation based sample size calculations can be found [here](http://egap.org/content/power-analysis-simulations-r).
-
-[^2] This is not the first study to do so that the author has encountered, and it is highly unlikely to be the last, despite evidence to the contrary.
+One final comment on this approach is that it assumes the analyses will be conducted purely on the risk categories alone and no other information on individuals will be included.  This may be the intention but often co-variates are used in the statistical analyses and in doing so increase the power to detect a difference as the variation attributable to co-variates is accounted for in the analytical process and an estimate of the variation attributable to the predictor of interest, in this case the categorisation of head circumference, is obtained.  The stated numbers are in essence a worst case scenario and including co-variates may result in an analysis that has greater power than that which has been calculated.  An example of the impact of including co-variates on simulation based sample size calculations can be found [here](http://egap.org/content/power-analysis-simulations-r).
